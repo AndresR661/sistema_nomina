@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Empleados - Sistema de Nómina{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Empleados</h2>
+        <p>Gestión del personal activo en el sistema</p>
+    </div>
+    <button class="btn btn-primary-custom btn-custom" data-bs-toggle="modal" data-bs-target="#modalNuevoEmpleado">
+        <i class="fas fa-plus"></i> Nuevo Empleado
+    </button>
+</div>
+
+<!-- Tabla de Empleados -->
+<div class="content-card">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-users text-danger"></i> Lista de Empleados Activos</h5>
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control-custom" placeholder="Buscar empleado..." style="width: 250px;">
+        </div>
+    </div>
+    <div class="card-body-custom p-0">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Empleado</th>
+                        <th>Cédula</th>
+                        <th>Cargo</th>
+                        <th>Salario/Hora</th>
+                        <th>ID Biométrico</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for empleado in empleados %}
+                    <tr>
+                        <td><span class="text-muted">#{{ empleado.id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="user-avatar" style="width: 40px; height: 40px; background: linear-gradient(135deg, #dc2626, #991b1b);">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ empleado.nombre }} {{ empleado.apellido }}</strong>
+                                    <small class="text-muted d-block">Registrado el {{ empleado.fecha_registro.strftime('%d/%m/%Y') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ empleado.cedula }}</td>
+                        <td><span class="badge-custom badge-warning">{{ empleado.cargo }}</span></td>
+                        <td><strong class="text-success">${{ "%.2f" % empleado.salario_hora }}</strong></td>
+                        <td>
+                            {% if empleado.uid_biometrico %}
+                                <span class="badge-custom badge-success">
+                                    <i class="fas fa-fingerprint"></i> {{ empleado.uid_biometrico }}
+                                </span>
+                            {% else %}
+                                <span class="badge-custom badge-danger">
+                                    <i class="fas fa-times"></i> No asignado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-custom badge-success">
+                                <i class="fas fa-check-circle"></i> Activo
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn-icon edit" onclick="editarEmpleado({{ empleado.id }})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{{ url_for('main.eliminar_empleado', id=empleado.id) }}" 
+                                   class="btn-icon" title="Desactivar"
+                                   onclick="return confirm('¿Está seguro de desactivar este empleado?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No hay empleados registrados</p>
+                            <button class="btn btn-primary-custom btn-custom btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoEmpleado">
+                                <i class="fas fa-plus"></i> Agregar primer empleado
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Empleado -->
+<div class="modal fade modal-custom" id="modalNuevoEmpleado" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.nuevo_empleado') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus text-danger"></i> Nuevo Empleado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Nombre</label>
+                            <input type="text" class="form-control-custom" name="nombre" placeholder="Ej: Juan" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Apellido</label>
+                            <input type="text" class="form-control-custom" name="apellido" placeholder="Ej: Pérez" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Cédula</label>
+                            <input type="text" class="form-control-custom" name="cedula" placeholder="Ej: 1234567890" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Cargo</label>
+                            <input type="text" class="form-control-custom" name="cargo" placeholder="Ej: Chef Principal" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Salario por Hora ($)</label>
+                            <input type="number" step="0.01" class="form-control-custom" name="salario_hora" placeholder="Ej: 15000.00" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">ID Biométrico (opcional)</label>
+                            <input type="number" class="form-control-custom" name="uid_biometrico" placeholder="Ej: 123">
+                            <small class="text-muted">ID del lector ZKTeco</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary-custom btn-custom">
+                        <i class="fas fa-save"></i> Guardar Empleado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Empleado -->
+<div class="modal fade modal-custom" id="modalEditarEmpleado" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="formEditar" method="POST" action="">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit text-warning"></i> Editar Empleado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Nombre</label>
+                            <input type="text" class="form-control-custom" name="nombre" id="edit_nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Apellido</label>
+                            <input type="text" class="form-control-custom" name="apellido" id="edit_apellido" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Cédula</label>
+                            <input type="text" class="form-control-custom" name="cedula" id="edit_cedula" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Cargo</label>
+                            <input type="text" class="form-control-custom" name="cargo" id="edit_cargo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Salario por Hora ($)</label>
+                            <input type="number" step="0.01" class="form-control-custom" name="salario_hora" id="edit_salario" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">ID Biométrico</label>
+                            <input type="number" class="form-control-custom" name="uid_biometrico" id="edit_uid">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary-custom btn-custom">
+                        <i class="fas fa-save"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const empleadosData = {{ empleados_json|tojson|safe }};
+
+function editarEmpleado(id) {
+    const empleado = empleadosData.find(e => e.id === id);
+    if (empleado) {
+        document.getElementById('edit_nombre').value = empleado.nombre;
+        document.getElementById('edit_apellido').value = empleado.apellido;
+        document.getElementById('edit_cedula').value = empleado.cedula;
+        document.getElementById('edit_cargo').value = empleado.cargo;
+        document.getElementById('edit_salario').value = empleado.salario_hora;
+        document.getElementById('edit_uid').value = empleado.uid_biometrico || '';
+        document.getElementById('formEditar').action = '/empleados/editar/' + id;
+        
+        new bootstrap.Modal(document.getElementById('modalEditarEmpleado')).show();
+    }
+}
+</script>
+{% endblock %}

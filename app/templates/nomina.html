@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Liquidación de Nómina - Sistema Biométrico{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Liquidar Nómina</h2>
+        <p>Cálculo de salarios y prestaciones sociales</p>
+    </div>
+    <button class="btn btn-primary-custom btn-custom" data-bs-toggle="modal" data-bs-target="#modalCalcularNomina">
+        <i class="fas fa-calculator"></i> Calcular Nómina
+    </button>
+</div>
+
+<!-- Resumen de Valores -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-value">$1.750.905</div>
+            <div class="stat-label">SMMLV 2026</div>
+            <small class="text-muted">Salario Mínimo</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-bus"></i>
+            </div>
+            <div class="stat-value">$249.095</div>
+            <div class="stat-label">Aux. Transporte</div>
+            <small class="text-muted">2026</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="stat-value">8.5%</div>
+            <div class="stat-label">Aportes SS</div>
+            <small class="text-muted">Salud + Pensión</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon red">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="stat-value">4.17%</div>
+            <div class="stat-label">Prestaciones</div>
+            <small class="text-muted">Cesantías + Primas</small>
+        </div>
+    </div>
+</div>
+
+<!-- Historial de Nóminas -->
+<div class="content-card">
+    <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-history text-info"></i> Historial de Nóminas Calculadas</h5>
+        <div class="d-flex gap-2">
+            <select class="form-control-custom" style="width: 150px;">
+                <option>2026</option>
+                <option>2025</option>
+            </select>
+            <select class="form-control-custom" style="width: 150px;">
+                <option>Todos los meses</option>
+                <option>Enero</option>
+                <option>Febrero</option>
+                <option>Marzo</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body-custom p-0">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Empleado</th>
+                        <th>Periodo</th>
+                        <th>Horas</th>
+                        <th>Salario Base</th>
+                        <th>Bonificaciones</th>
+                        <th>Deducciones</th>
+                        <th>Total Neto</th>
+                        <th>Fecha Cálculo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nom in nominas %}
+                    <tr>
+                        <td><span class="text-muted">#{{ nom.id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar" style="width: 30px; height: 30px; font-size: 12px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <strong>{{ nom.empleado.nombre }} {{ nom.empleado.apellido }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-custom badge-primary">
+                                {{ nom.periodo_inicio.strftime('%d/%m') }} - {{ nom.periodo_fin.strftime('%d/%m/%Y') }}
+                            </span>
+                        </td>
+                        <td><strong>{{ nom.horas_trabajadas }}h</strong></td>
+                        <td class="text-success">${{ "%.2f" % nom.salario_base }}</td>
+                        <td class="text-info">+${{ "%.2f" % nom.bonificaciones }}</td>
+                        <td class="text-danger">-${{ "%.2f" % nom.deducciones }}</td>
+                        <td><strong class="text-success" style="font-size: 16px;">${{ "%.2f" % nom.total_neto }}</strong></td>
+                        <td class="text-muted">{{ nom.fecha_calculo.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn-icon edit" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-icon" title="Descargar recibo">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No hay nóminas calculadas</p>
+                            <button class="btn btn-primary-custom btn-custom btn-sm" data-bs-toggle="modal" data-bs-target="#modalCalcularNomina">
+                                <i class="fas fa-plus"></i> Calcular primera nómina
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Calcular Nómina -->
+<div class="modal fade modal-custom" id="modalCalcularNomina" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.calcular_nomina') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-calculator text-danger"></i> Calcular Nueva Nómina</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label-custom">Empleado</label>
+                            <select class="form-control-custom" name="empleado_id" required>
+                                <option value="">-- Seleccionar empleado --</option>
+                                {% for emp in empleados %}
+                                <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }} (${{ "%.2f" % emp.salario_hora }}/hora)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Fecha Inicio Periodo</label>
+                            <input type="date" class="form-control-custom" name="fecha_inicio" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Fecha Fin Periodo</label>
+                            <input type="date" class="form-control-custom" name="fecha_fin" required>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="p-3 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid #dc2626;">
+                                <h6 class="text-danger mb-2"><i class="fas fa-info-circle"></i> Información Importante</h6>
+                                <p class="mb-0 text-muted small">El sistema calculará automáticamente las horas trabajadas según los registros de asistencia del periodo seleccionado. Asegúrese de que el empleado tenga registros de entrada y salida completos.</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Bonificaciones ($)</label>
+                            <input type="number" step="0.01" class="form-control-custom" name="bonificaciones" value="0" placeholder="Ej: 500000">
+                            <small class="text-muted">Horas extras, recargos, etc.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Deducciones ($)</label>
+                            <input type="number" step="0.01" class="form-control-custom" name="deducciones" value="0" placeholder="Ej: 100000">
+                            <small class="text-muted">Préstamos, anticipos, etc.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary-custom btn-custom">
+                        <i class="fas fa-save"></i> Calcular y Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

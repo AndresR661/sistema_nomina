@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Control de Asistencia - Sistema de Nómina{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Control de Asistencia</h2>
+        <p>Registro de entrada y salida del personal</p>
+    </div>
+    <div class="d-flex gap-3 align-items-center">
+        <span class="badge-custom badge-success">
+            <i class="fas fa-calendar"></i> {{ hoy.strftime('%d/%m/%Y') }}
+        </span>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Registrar Entrada -->
+    <div class="col-md-4 mb-4">
+        <div class="content-card h-100">
+            <div class="card-header-custom bg-success bg-opacity-10">
+                <h5><i class="fas fa-sign-in-alt text-success"></i> Registrar Entrada</h5>
+            </div>
+            <div class="card-body-custom">
+                <form method="POST" action="{{ url_for('main.registrar_asistencia') }}">
+                    <div class="mb-3">
+                        <label class="form-label-custom">Seleccionar Empleado</label>
+                        <select class="form-control-custom" name="empleado_id" required>
+                            <option value="">-- Seleccionar --</option>
+                            {% for emp in empleados %}
+                            <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="tipo" value="entrada">
+                    <button type="submit" class="btn btn-success w-100 btn-custom" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fas fa-check-circle"></i> Registrar Entrada
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registrar Salida -->
+    <div class="col-md-4 mb-4">
+        <div class="content-card h-100">
+            <div class="card-header-custom bg-danger bg-opacity-10">
+                <h5><i class="fas fa-sign-out-alt text-danger"></i> Registrar Salida</h5>
+            </div>
+            <div class="card-body-custom">
+                <form method="POST" action="{{ url_for('main.registrar_asistencia') }}">
+                    <div class="mb-3">
+                        <label class="form-label-custom">Seleccionar Empleado</label>
+                        <select class="form-control-custom" name="empleado_id" required>
+                            <option value="">-- Seleccionar --</option>
+                            {% for emp in empleados %}
+                            <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="tipo" value="salida">
+                    <button type="submit" class="btn btn-danger w-100 btn-custom" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+                        <i class="fas fa-check-circle"></i> Registrar Salida
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado Biométrico -->
+    <div class="col-md-4 mb-4">
+        <div class="content-card h-100">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-fingerprint text-info"></i> Lector Biométrico</h5>
+            </div>
+            <div class="card-body-custom text-center">
+                <div id="estado-biometrico" class="mb-3 p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <i class="fas fa-wifi fa-2x text-muted mb-2"></i>
+                    <p class="mb-0 text-muted">Verificando conexión...</p>
+                </div>
+                <button class="btn btn-info w-100 btn-custom mb-2" onclick="sincronizarBiometrico()" style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.5); color: #60a5fa;">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Datos
+                </button>
+                <small class="text-muted d-block">IP: 192.168.1.201:4370</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registros del Día -->
+<div class="content-card">
+    <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-clipboard-list text-primary"></i> Registros de Hoy</h5>
+        <span class="badge-custom badge-primary">{{ registros|length }} registros</span>
+    </div>
+    <div class="card-body-custom p-0">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Cargo</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Horas Trabajadas</th>
+                        <th>Tipo Registro</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registros %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="user-avatar" style="width: 35px; height: 35px; font-size: 14px; background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <strong>{{ reg.empleado.nombre }} {{ reg.empleado.apellido }}</strong>
+                            </div>
+                        </td>
+                        <td><span class="badge-custom badge-warning">{{ reg.empleado.cargo }}</span></td>
+                        <td>
+                            {% if reg.hora_entrada %}
+                                <span class="text-success"><i class="fas fa-clock"></i> {{ reg.hora_entrada.strftime('%H:%M') }}</span>
+                            {% else %}
+                                <span class="text-muted">--:--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reg.hora_salida %}
+                                <span class="text-danger"><i class="fas fa-clock"></i> {{ reg.hora_salida.strftime('%H:%M') }}</span>
+                            {% else %}
+                                <span class="text-muted">--:--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reg.hora_entrada and reg.hora_salida %}
+                                {% set entrada_min = reg.hora_entrada.hour * 60 + reg.hora_entrada.minute %}
+                                {% set salida_min = reg.hora_salida.hour * 60 + reg.hora_salida.minute %}
+                                {% set horas = (salida_min - entrada_min) // 60 %}
+                                {% set minutos = (salida_min - entrada_min) % 60 %}
+                                <strong class="text-info">{{ horas }}h {{ minutos }}m</strong>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-custom badge-{{ 'success' if reg.tipo_registro == 'biometrico' else 'primary' }}">
+                                <i class="fas fa-{{ 'fingerprint' if reg.tipo_registro == 'biometrico' else 'keyboard' }}"></i>
+                                {{ reg.tipo_registro|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if reg.hora_entrada and reg.hora_salida %}
+                                <span class="badge-custom badge-success"><i class="fas fa-check"></i> Completado</span>
+                            {% elif reg.hora_entrada %}
+                                <span class="badge-custom badge-warning"><i class="fas fa-hourglass-half"></i> En curso</span>
+                            {% else %}
+                                <span class="badge-custom badge-danger"><i class="fas fa-times"></i> Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-clipboard fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No hay registros de asistencia hoy</p>
+                            <small class="text-muted">Los registros aparecerán aquí cuando los empleados marquen entrada o salida</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function sincronizarBiometrico() {
+    const estadoDiv = document.getElementById('estado-biometrico');
+    estadoDiv.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x text-warning mb-2"></i><p class="mb-0 text-warning">Sincronizando...</p>';
+    
+    fetch('/biometrico/sincronizar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ip: '192.168.1.201', puerto: 4370})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            estadoDiv.innerHTML = `<i class="fas fa-check-circle fa-2x text-success mb-2"></i><p class="mb-0 text-success">${data.message}</p>`;
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            estadoDiv.innerHTML = `<i class="fas fa-times-circle fa-2x text-danger mb-2"></i><p class="mb-0 text-danger">${data.message}</p>`;
+        }
+    })
+    .catch(error => {
+        estadoDiv.innerHTML = `<i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i><p class="mb-0 text-warning">Error de conexión</p>`;
+    });
+}
+
+// Verificar conexión al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/biometrico/conectar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ip: '192.168.1.201', puerto: 4370})
+    })
+    .then(response => response.json())
+    .then(data => {
+        const estadoDiv = document.getElementById('estado-biometrico');
+        if (data.success) {
+            estadoDiv.innerHTML = `<i class="fas fa-check-circle fa-2x text-success mb-2"></i><p class="mb-0 text-success">Conectado</p>`;
+        } else {
+            estadoDiv.innerHTML = `<i class="fas fa-times-circle fa-2x text-danger mb-2"></i><p class="mb-0 text-danger">Desconectado</p>`;
+        }
+    });
+});
+</script>
+{% endblock %}
