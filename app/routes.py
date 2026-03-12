@@ -38,10 +38,34 @@ def empleados():
 @main.route('/empleados/nuevo', methods=['POST'])
 def nuevo_empleado():
     try:
+        cedula = request.form['cedula']
+        
+        # Buscar si ya existe un empleado con esta cédula (activo o inactivo)
+        empleado_existente = Empleado.query.filter_by(cedula=cedula).first()
+        
+        if empleado_existente:
+            if empleado_existente.activo:
+                flash('Ya existe un empleado activo con esta cédula', 'warning')
+                return redirect(url_for('main.empleados'))
+            else:
+                # Reactivar empleado desactivado
+                empleado_existente.nombre = request.form['nombre']
+                empleado_existente.apellido = request.form['apellido']
+                empleado_existente.cargo = request.form['cargo']
+                empleado_existente.salario_hora = float(request.form['salario_hora'])
+                empleado_existente.uid_biometrico = int(request.form['uid_biometrico']) if request.form['uid_biometrico'] else None
+                empleado_existente.activo = True
+                empleado_existente.fecha_registro = datetime.utcnow()
+                
+                db.session.commit()
+                flash(f'Empleado {empleado_existente.nombre} {empleado_existente.apellido} reactivado exitosamente', 'success')
+                return redirect(url_for('main.empleados'))
+        
+        # Crear nuevo empleado
         empleado = Empleado(
             nombre=request.form['nombre'],
             apellido=request.form['apellido'],
-            cedula=request.form['cedula'],
+            cedula=cedula,
             cargo=request.form['cargo'],
             salario_hora=float(request.form['salario_hora']),
             uid_biometrico=int(request.form['uid_biometrico']) if request.form['uid_biometrico'] else None
@@ -49,9 +73,11 @@ def nuevo_empleado():
         db.session.add(empleado)
         db.session.commit()
         flash('Empleado registrado exitosamente', 'success')
+        
     except Exception as e:
         db.session.rollback()
         flash(f'Error al registrar empleado: {str(e)}', 'danger')
+    
     return redirect(url_for('main.empleados'))
 
 @main.route('/empleados/editar/<int:id>', methods=['POST'])

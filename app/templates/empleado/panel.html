@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Panel - Sistema de Nómina{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-user text-success"></i> Mi Panel</h2>
+    <p>Bienvenido, {{ empleado.nombre }} {{ empleado.apellido }}</p>
+</div>
+
+<div class="row">
+    <!-- Mi Información -->
+    <div class="col-lg-3 mb-4">
+        <div class="content-card">
+            <div class="card-header-custom bg-success bg-opacity-10">
+                <h5><i class="fas fa-id-card text-success"></i> Mi Información</h5>
+            </div>
+            <div class="card-body-custom">
+                <div class="text-center mb-4">
+                    <div class="user-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 40px; background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h4>{{ empleado.nombre }} {{ empleado.apellido }}</h4>
+                    <span class="badge-custom badge-warning">{{ empleado.cargo }}</span>
+                </div>
+                
+                <hr style="border-color: rgba(255,255,255,0.1);">
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Cédula</small>
+                    <strong>{{ empleado.cedula }}</strong>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Salario por Hora</small>
+                    <strong class="text-success">${{ "%.2f" % empleado.salario_hora }}</strong>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">ID Biométrico</small>
+                    {% if empleado.uid_biometrico %}
+                        <span class="badge-custom badge-success">
+                            <i class="fas fa-fingerprint"></i> {{ empleado.uid_biometrico }}
+                        </span>
+                    {% else %}
+                        <span class="badge-custom badge-danger">No asignado</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <small class="text-muted d-block">Fecha de Registro</small>
+                    <strong>{{ empleado.fecha_registro.strftime('%d/%m/%Y') }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="content-card mt-4">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-bolt text-warning"></i> Acciones</h5>
+            </div>
+            <div class="card-body-custom">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.asistencia') }}" class="btn btn-success btn-custom">
+                        <i class="fas fa-clock"></i> Registrar Asistencia
+                    </a>
+                    <button class="btn btn-primary-custom btn-custom" data-bs-toggle="modal" data-bs-target="#modalSolicitarNovedad">
+                        <i class="fas fa-calendar-plus"></i> Solicitar Novedad
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis Últimas Nóminas -->
+    <div class="col-lg-5 mb-4">
+        <div class="content-card h-100">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-money-bill-wave text-success"></i> Mis Últimas Nóminas</h5>
+                <a href="#" class="btn btn-sm btn-outline-success">Ver todas</a>
+            </div>
+            <div class="card-body-custom p-0">
+                {% if ultimas_nominas %}
+                    <div class="list-group list-group-flush" style="background: transparent;">
+                        {% for nomina in ultimas_nominas %}
+                        <div class="list-group-item" style="background: transparent; border-color: rgba(255,255,255,0.05);">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="text-success fs-5">${{ "%.2f" % nomina.total_neto }}</strong>
+                                    <div class="small text-muted">
+                                        {{ nomina.periodo_inicio.strftime('%d/%m') }} - {{ nomina.periodo_fin.strftime('%d/%m/%Y') }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        <i class="fas fa-clock"></i> {{ nomina.horas_trabajadas }} horas trabajadas
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-info" title="Descargar recibo">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-money-bill fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No hay nóminas registradas aún</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis Novedades -->
+    <div class="col-lg-4 mb-4">
+        <div class="content-card h-100">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-calendar-alt text-info"></i> Mis Novedades</h5>
+                <span class="badge-custom badge-primary">{{ ultimas_novedades|length if ultimas_novedades else 0 }}</span>
+            </div>
+            <div class="card-body-custom p-0">
+                {% if ultimas_novedades %}
+                    <div class="list-group list-group-flush" style="background: transparent;">
+                        {% for novedad in ultimas_novedades %}
+                        <div class="list-group-item" style="background: transparent; border-color: rgba(255,255,255,0.05);">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="text-{{ 'success' if novedad.tipo == 'vacacion' else 'danger' if novedad.tipo == 'incapacidad' else 'info' }}">
+                                        {{ novedad.tipo|title }}
+                                    </strong>
+                                    <div class="small text-muted">
+                                        {{ novedad.fecha_inicio.strftime('%d/%m') }} - {{ novedad.fecha_fin.strftime('%d/%m') }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ novedad.dias }} días
+                                    </div>
+                                </div>
+                                <span class="badge-custom badge-{{ 'warning' if novedad.estado == 'pendiente' else 'success' if novedad.estado == 'aprobada' else 'danger' }}">
+                                    {{ novedad.estado|title }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No tienes novedades registradas</p>
+                        <button class="btn btn-sm btn-primary-custom" data-bs-toggle="modal" data-bs-target="#modalSolicitarNovedad">
+                            <i class="fas fa-plus"></i> Solicitar primera novedad
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Solicitar Novedad -->
+<div class="modal fade modal-custom" id="modalSolicitarNovedad" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('empleado.solicitar_novedad') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-calendar-plus text-primary"></i> Solicitar Novedad</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label-custom">Tipo de Novedad</label>
+                        <select class="form-control-custom" name="tipo" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="vacacion">Vacaciones</option>
+                            <option value="incapacidad">Incapacidad Médica</option>
+                            <option value="licencia">Licencia Remunerada</option>
+                            <option value="permiso">Permiso No Remunerado</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label-custom">Fecha Inicio</label>
+                            <input type="date" class="form-control-custom" name="fecha_inicio" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label-custom">Fecha Fin</label>
+                            <input type="date" class="form-control-custom" name="fecha_fin" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-custom">Descripción / Motivo</label>
+                        <textarea class="form-control-custom" name="descripcion" rows="3" placeholder="Explique el motivo de su solicitud..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary-custom btn-custom">
+                        <i class="fas fa-paper-plane"></i> Enviar Solicitud
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

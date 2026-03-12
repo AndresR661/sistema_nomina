@@ -1,0 +1,1 @@
+from app.empleado.routes import empleado

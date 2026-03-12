@@ -26,12 +26,20 @@
                 <form method="POST" action="{{ url_for('main.registrar_asistencia') }}">
                     <div class="mb-3">
                         <label class="form-label-custom">Seleccionar Empleado</label>
-                        <select class="form-control-custom" name="empleado_id" required>
-                            <option value="">-- Seleccionar --</option>
-                            {% for emp in empleados %}
-                            <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
-                            {% endfor %}
-                        </select>
+                         {% if current_user.es_admin() %}
+                           <select class="form-control-custom" name="empleado_id" required>
+                           <option value="">-- Seleccionar --</option>
+                         {% for emp in empleados %}
+                           <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
+                         {% endfor %}
+                           </select>
+                         {% else %}
+                         <input type="hidden" name="empleado_id" value="{{ current_user.empleado_id }}">
+                         <div class="p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                         <strong>{{ current_user.empleado.nombre }} {{ current_user.empleado.apellido }}</strong>
+                         <small class="text-muted d-block">{{ current_user.empleado.cargo }}</small>
+                         </div>
+                         {% endif %}
                     </div>
                     <input type="hidden" name="tipo" value="entrada">
                     <button type="submit" class="btn btn-success w-100 btn-custom" style="background: linear-gradient(135deg, #10b981, #059669);">
@@ -52,12 +60,20 @@
                 <form method="POST" action="{{ url_for('main.registrar_asistencia') }}">
                     <div class="mb-3">
                         <label class="form-label-custom">Seleccionar Empleado</label>
-                        <select class="form-control-custom" name="empleado_id" required>
-                            <option value="">-- Seleccionar --</option>
-                            {% for emp in empleados %}
-                            <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
-                            {% endfor %}
-                        </select>
+                       {% if current_user.es_admin() %}
+    <select class="form-control-custom" name="empleado_id" required>
+        <option value="">-- Seleccionar --</option>
+        {% for emp in empleados %}
+        <option value="{{ emp.id }}">{{ emp.nombre }} {{ emp.apellido }} - {{ emp.cargo }}</option>
+        {% endfor %}
+    </select>
+{% else %}
+    <input type="hidden" name="empleado_id" value="{{ current_user.empleado_id }}">
+    <div class="p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+        <strong>{{ current_user.empleado.nombre }} {{ current_user.empleado.apellido }}</strong>
+        <small class="text-muted d-block">{{ current_user.empleado.cargo }}</small>
+    </div>
+{% endif %}
                     </div>
                     <input type="hidden" name="tipo" value="salida">
                     <button type="submit" class="btn btn-danger w-100 btn-custom" style="background: linear-gradient(135deg, #dc2626, #991b1b);">

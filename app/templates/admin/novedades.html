@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Novedades - Sistema de Nómina{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-calendar-check text-info"></i> Gestión de Novedades</h2>
+    <p>Aprobación de solicitudes de empleados</p>
+</div>
+
+<!-- Novedades Pendientes -->
+<div class="content-card mb-4">
+    <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-clock text-warning"></i> Novedades Pendientes</h5>
+        <span class="badge-custom badge-warning">{{ novedades_pendientes|length }} por revisar</span>
+    </div>
+    <div class="card-body-custom p-0">
+        {% if novedades_pendientes %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Tipo</th>
+                            <th>Periodo</th>
+                            <th>Días</th>
+                            <th>Fecha Solicitud</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for novedad in novedades_pendientes %}
+                        <tr>
+                            <td>
+                                <strong>{{ novedad.empleado.nombre }} {{ novedad.empleado.apellido }}</strong>
+                                <small class="text-muted d-block">{{ novedad.empleado.cargo }}</small>
+                            </td>
+                            <td>
+                                <span class="badge-custom badge-{{ 'success' if novedad.tipo == 'vacacion' else 'danger' if novedad.tipo == 'incapacidad' else 'info' }}">
+                                    {{ novedad.tipo|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ novedad.fecha_inicio.strftime('%d/%m') }} - {{ novedad.fecha_fin.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td><strong>{{ novedad.dias }}</strong></td>
+                            <td class="text-muted">{{ novedad.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-success" onclick="aprobarNovedad({{ novedad.id }})">
+                                        <i class="fas fa-check"></i> Aprobar
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rechazarNovedad({{ novedad.id }})">
+                                        <i class="fas fa-times"></i> Rechazar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <p class="text-muted">No hay novedades pendientes de revisión</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Historial de Novedades -->
+<div class="content-card">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-history text-secondary"></i> Historial de Novedades</h5>
+    </div>
+    <div class="card-body-custom p-0">
+        {% if novedades_historial %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Tipo</th>
+                            <th>Periodo</th>
+                            <th>Estado</th>
+                            <th>Fecha Respuesta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for novedad in novedades_historial %}
+                        <tr>
+                            <td>
+                                <strong>{{ novedad.empleado.nombre }} {{ novedad.empleado.apellido }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge-custom badge-{{ 'success' if novedad.tipo == 'vacacion' else 'danger' if novedad.tipo == 'incapacidad' else 'info' }}">
+                                    {{ novedad.tipo|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ novedad.fecha_inicio.strftime('%d/%m') }} - {{ novedad.fecha_fin.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td>
+                                <span class="badge-custom badge-{{ 'success' if novedad.estado == 'aprobada' else 'danger' }}">
+                                    {{ novedad.estado|title }}
+                                </span>
+                            </td>
+                            <td class="text-muted">
+                                {{ novedad.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if novedad.fecha_respuesta else '-' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No hay historial de novedades</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function aprobarNovedad(id) {
+    if (confirm('¿Está seguro de aprobar esta novedad?')) {
+        fetch('/admin/novedad/' + id + '/aprobar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+
+function rechazarNovedad(id) {
+    const motivo = prompt('Ingrese el motivo del rechazo:');
+    if (motivo) {
+        fetch('/admin/novedad/' + id + '/rechazar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({motivo: motivo})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import Empleado, Asistencia, Nomina
+from app.models import Empleado, Asistencia, Nomina, Usuario, Configuracion
 
 app = create_app()
 
@@ -9,7 +9,9 @@ def make_shell_context():
         'db': db,
         'Empleado': Empleado,
         'Asistencia': Asistencia,
-        'Nomina': Nomina
+        'Nomina': Nomina,
+        'Usuario': Usuario,
+        'Configuracion': Configuracion
     }
 
 if __name__ == '__main__':

@@ -19,37 +19,62 @@
                         <i class="fas fa-fingerprint"></i>
                     </div>
                     <div class="logo-text">
-                        <h4>NÓMINA<span class="text-danger">PRO</span></h4>
-                        <small>Sistema Biométrico</small>
+                        <h4>KAZOKU<span class="text-danger">家族</span></h4>
+                        <small>Sistema De Nomina Biométrico</small>
                     </div>
                 </div>
             </div>
 
             <ul class="list-unstyled components">
-                <li class="{% if request.endpoint == 'main.index' %}active{% endif %}">
-                    <a href="{{ url_for('main.index') }}">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="{% if request.endpoint == 'main.empleados' %}active{% endif %}">
-                    <a href="{{ url_for('main.empleados') }}">
-                        <i class="fas fa-users"></i>
-                        <span>Empleados</span>
-                    </a>
-                </li>
-                <li class="{% if request.endpoint == 'main.asistencia' %}active{% endif %}">
-                    <a href="{{ url_for('main.asistencia') }}">
-                        <i class="fas fa-clock"></i>
-                        <span>Asistencia</span>
-                    </a>
-                </li>
-                <li class="{% if request.endpoint == 'main.nomina' %}active{% endif %}">
-                    <a href="{{ url_for('main.nomina') }}">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span>Liquidar Nómina</span>
-                    </a>
-                </li>
+                {% if current_user.is_authenticated and current_user.es_admin() %}
+                    <!-- Menú Admin -->
+                    <li class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('admin.dashboard') }}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.endpoint == 'main.empleados' %}active{% endif %}">
+                        <a href="{{ url_for('main.empleados') }}">
+                            <i class="fas fa-users"></i>
+                            <span>Empleados</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.endpoint == 'main.asistencia' %}active{% endif %}">
+                        <a href="{{ url_for('main.asistencia') }}">
+                            <i class="fas fa-clock"></i>
+                            <span>Asistencia</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.endpoint == 'main.nomina' %}active{% endif %}">
+                        <a href="{{ url_for('main.nomina') }}">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Liquidar Nómina</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.novedades' %}active{% endif %}">
+                        <a href="{{ url_for('admin.novedades') }}">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Novedades</span>
+                            {% if novedades_pendientes_count() > 0 %}
+                            <span class="badge bg-danger ms-2">{{ novedades_pendientes_count() }}</span>
+                        {% endif %}
+                    </li>
+                {% else %}
+                    <!-- Menú Empleado -->
+                    <li class="{% if request.endpoint == 'empleado.panel' %}active{% endif %}">
+                        <a href="{{ url_for('empleado.panel') }}">
+                            <i class="fas fa-user"></i>
+                            <span>Mi Panel</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.endpoint == 'main.asistencia' %}active{% endif %}">
+                        <a href="{{ url_for('main.asistencia') }}">
+                            <i class="fas fa-clock"></i>
+                            <span>Registrar Asistencia</span>
+                        </a>
+                    </li>
+                {% endif %}
             </ul>
 
             <div class="sidebar-footer">
@@ -58,13 +83,13 @@
                         <i class="fas fa-user-shield"></i>
                     </div>
                     <div class="user-details">
-                        <small>Administrador</small>
-                        <span>Sistema de Nómina</span>
+                        <small>{{ current_user.username if current_user.is_authenticated else 'Invitado' }}</small>
+                        <span>{{ 'Administrador' if current_user.is_authenticated and current_user.es_admin() else 'Empleado' if current_user.is_authenticated else 'Invitado' }}</span>
                     </div>
                 </div>
-                <button class="btn btn-logout">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
                     <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                </button>
+                </a>
             </div>
         </nav>
 
